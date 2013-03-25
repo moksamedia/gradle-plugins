@@ -29,6 +29,8 @@ class JerseyPlugin implements Plugin<Project> {
 		project.task('prepWebXml') {
 
 			war.dependsOn prepWebXml
+			
+			throw new Exception("I am stupid")
 
 			File webXml   = file(project.war.webXml)
 
