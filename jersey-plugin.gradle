@@ -1,7 +1,23 @@
+/*
+ *	Minimal usage: 
+ *  - place "apply from: 'https://raw.github.com/moksamedia/gradle-plugins/master/jersey-plugin.gradle'" at top of gradle build script
+ *  - define extension properties:
+ * 
+ *      war {
+ * 			webXml = file('webxml/webxml.xml')
+ * 		}
+ *
+ *		jersey {
+ *			packages = "com.some.package;com.another.package"
+ * 			servletName = "My Servlet"
+ *			urlPattern = "/*"
+ *		}
+ *
+ */
+
 apply plugin: 'groovy'
 apply plugin: 'jetty'
 apply plugin: JerseyPlugin
-
 
 import groovy.xml.XmlUtil
 import org.slf4j.Logger
@@ -24,7 +40,14 @@ dependencies {
 		
 }
 
-
+/*
+ *	Main class that implements the Jersey plugin. Use with the following:
+ *  	apply from: 'https://raw.github.com/moksamedia/gradle-plugins/master/jersey-plugin.gradle'
+ * 	
+ *  Notes:
+ *   - the jetty plugin implies the war plugin. User must define the 'webXml' property of the war
+ *     plugin: war { webXml = file("path/to/some/file.xml") }
+ */
 class JerseyPlugin implements Plugin<Project> {
 
 	Logger log = LoggerFactory.getLogger("build-logger")
@@ -37,12 +60,16 @@ class JerseyPlugin implements Plugin<Project> {
 			
 			doLast {
 
+				
+				// get the webXml file from the war plugin extension
 				File webXml = project.war.webXml
 
+				// make sure it is not null
 				if (webXml == null) {
 					throw new GradleException("Property \"webXml\" for plugin \"war\" is not defined!")
 				}
 					
+				// if it doesn't exist, generate it
 				if (!webXml.exists()) {	
 				
 					log.info "web.xml file does not exist. Creating \"${webXml.canonicalPath}\""
@@ -52,6 +79,8 @@ class JerseyPlugin implements Plugin<Project> {
 				
 					webXml.write("""<?xml version="1.0" encoding="utf-8"?><web-app><servlet></servlet><servlet-mapping></servlet-mapping></web-app>""")		
 				}
+			
+				// parse the web.xml file and replace the servlet and servlet-mapping nodes
 			
 				def xml = new XmlParser().parse(webXml)
 
@@ -73,23 +102,26 @@ class JerseyPlugin implements Plugin<Project> {
 					}
 				}
 
+				// serialize xml to string
 				String output = XmlUtil.serialize((Node)xml)
 
 				log.info "web.xml updated with packages=${project.extensions.jersey.packages}, servletName=${project.extensions.jersey.servletName}, and urlPattern=${project.extensions.jersey.urlPattern}"
 
+				// write serialized XML to web.xml file
 				webXml.write(output)
 				
 			}
-			
 
 		}
 		
+		// setup dependency for war so prepWebXml is run
 		project.war.dependsOn project.prepWebXml
 			
 	}
 
 }
 
+// Define the Jersey extension properties
 class JerseyPluginExtension {
 	String packages = ''
 	String servletName = 'Jersey Servlet'
