@@ -1,0 +1,81 @@
+apply plugin: 'jetty'
+
+import groovy.xml.XmlUtil
+
+repositories {
+	mavenCentral()
+}
+	
+dependencies {
+	
+	/* JAX-RS (JSR 311) API */
+	compile 'javax.ws.rs:jsr311-api:1.1.1'
+	
+	/ * JERSEY BUNDLE */
+	compile 'com.sun.jersey:jersey-bundle:1.17'
+		
+	compile gradleApi()
+	groovy localGroovy()
+		
+}
+
+
+class JerseyPlugin implements Plugin<Project> {
+
+	void apply(Project project) {
+	
+		project.extensions.jersey =  new JerseyPluginExtension()
+	
+		project.task('prepWebXml') {
+
+			war.dependsOn prepWebXml
+
+			File webXml   = file(project.war.webXml)
+
+			outputs.file project.war.webXml
+
+			doLast {
+
+				def xml = new XmlSlurper().parseText(webXml.text)
+
+				xml.servlet.replaceNode {
+					servlet {
+						'servlet-name'("$project.extensions.jersey.servletName")
+						'servlet-class'("com.sun.jersey.spi.container.servlet.ServletContainer")
+						'init-param' {
+							'param-name'("com.sun.jersey.config.property.packages")
+							'param-value'(prokect.extensions.jersey.packages)
+						}
+					}
+				}
+
+				xml.'servlet-mapping'.replaceNode {
+					'servlet-mapping' {
+						'servlet-name'(project.extensions.jersey.servletName)
+						'url-patter'(project.extensions.jersey.urlPattern)
+					}
+				}
+
+				//webXml.write(xml.())
+
+				String output = XmlUtil.serialize(xml)
+
+				log.info "web.xml updated with group info: ${project.group}"
+				log.info output
+
+				webXml.write(output)
+				
+			}
+
+		}
+		
+	
+	}
+
+}
+
+class JerseyPluginExtension() {
+	String packages = ''
+	String servletName = 'Jersey Servlet'
+	String urlPatter = '/*'
+}
