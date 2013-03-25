@@ -1,6 +1,11 @@
+apply plugin: 'groovy'
 apply plugin: 'jetty'
+apply plugin: JerseyPlugin
+
 
 import groovy.xml.XmlUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 repositories {
 	mavenCentral()
@@ -22,31 +27,41 @@ dependencies {
 
 class JerseyPlugin implements Plugin<Project> {
 
+	Logger log = LoggerFactory.getLogger("build-logger")
+
 	void apply(Project project) {
-	
+		
 		project.extensions.jersey =  new JerseyPluginExtension()
-	
+		
 		project.task('prepWebXml') {
-
-			war.dependsOn prepWebXml
 			
-			throw new Exception("I am stupid")
-
-			File webXml   = file(project.war.webXml)
-
-			outputs.file project.war.webXml
-
 			doLast {
 
-				def xml = new XmlSlurper().parseText(webXml.text)
+				File webXml = project.war.webXml
+
+				if (webXml == null) {
+					throw new GradleException("Property \"webXml\" for plugin \"war\" is not defined!")
+				}
+					
+				if (!webXml.exists()) {	
+				
+					log.info "web.xml file does not exist. Creating \"${webXml.canonicalPath}\""
+				
+					File parentDir = new File(webXml.getParent())
+					if (!parentDir.exists()) parentDir.mkdirs()
+				
+					webXml.write("""<?xml version="1.0" encoding="utf-8"?><web-app><servlet></servlet><servlet-mapping></servlet-mapping></web-app>""")		
+				}
+			
+				def xml = new XmlParser().parse(webXml)
 
 				xml.servlet.replaceNode {
 					servlet {
-						'servlet-name'("$project.extensions.jersey.servletName")
+						'servlet-name'(project.extensions.jersey.servletName)
 						'servlet-class'("com.sun.jersey.spi.container.servlet.ServletContainer")
 						'init-param' {
 							'param-name'("com.sun.jersey.config.property.packages")
-							'param-value'(prokect.extensions.jersey.packages)
+							'param-value'(project.extensions.jersey.packages)
 						}
 					}
 				}
@@ -58,20 +73,19 @@ class JerseyPlugin implements Plugin<Project> {
 					}
 				}
 
-				//webXml.write(xml.())
+				String output = XmlUtil.serialize((Node)xml)
 
-				String output = XmlUtil.serialize(xml)
-
-				log.info "web.xml updated with group info: ${project.group}"
-				log.info output
+				log.info "web.xml updated with packages=${project.extensions.jersey.packages}, servletName=${project.extensions.jersey.servletName}, and urlPattern=${project.extensions.jersey.urlPattern}"
 
 				webXml.write(output)
 				
 			}
+			
 
 		}
 		
-	
+		project.war.dependsOn project.prepWebXml
+			
 	}
 
 }
@@ -79,5 +93,5 @@ class JerseyPlugin implements Plugin<Project> {
 class JerseyPluginExtension {
 	String packages = ''
 	String servletName = 'Jersey Servlet'
-	String urlPatter = '/*'
+	String urlPattern = '/*'
 }
