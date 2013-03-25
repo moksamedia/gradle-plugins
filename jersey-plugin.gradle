@@ -74,7 +74,7 @@ class JerseyPlugin implements Plugin<Project> {
 
 }
 
-class JerseyPluginExtension() {
+class JerseyPluginExtension {
 	String packages = ''
 	String servletName = 'Jersey Servlet'
 	String urlPatter = '/*'
