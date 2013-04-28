@@ -1,0 +1,15 @@
+/*
+ * A hack to exclude the groovy script and config files from the eclipse classpath
+ * so that eclipse doesn't think it's an error that we have a config.groovy in 
+ * both the src/main/resources and src/test/resources folders.
+ */
+eclipse.classpath.file.withXml {
+	def node = it.asNode()
+	def children = node.children()
+	children.each {
+		if (it.@path == 'src/main/resources' || it.@path == 'src/test/resources') {
+			it.@excluding = '*.groovy'
+			log.warn "Excluding *.groovy files from ${it.@path}"
+		}
+	}
+}
