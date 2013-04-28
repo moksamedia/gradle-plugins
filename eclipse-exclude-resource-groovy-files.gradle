@@ -9,7 +9,7 @@ eclipse.classpath.file.withXml {
 	children.each {
 		if (it.@path == 'src/main/resources' || it.@path == 'src/test/resources') {
 			it.@excluding = '*.groovy'
-			log.warn "Excluding *.groovy files from ${it.@path}"
+			println "Excluding *.groovy files from ${it.@path}"
 		}
 	}
 }
