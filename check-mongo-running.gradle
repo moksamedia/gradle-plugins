@@ -29,7 +29,7 @@ Closure mongoIsInstalledAndRunning = {
 	return true
 }
 
-boolean mongoOK = mongoIsInstalledAndRunning()
+ext.mongoOK = mongoIsInstalledAndRunning()
 
 task requireMongo << {
 	if (!mongoOK) throw new Exception("MongoDB does not appear to be running.")
