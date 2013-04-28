@@ -1,0 +1,36 @@
+String mongodbTestHost = 'localhost'
+int mongodbTestPort = 27017
+int mongodbStatusPort = mongodbTestPort + 1000
+
+Closure curlCheckMongoRunning = {
+	['curl', '-I', "$mongodbTestHost:$mongodbStatusPort"].execute().text.contains('200 OK')
+}
+
+Closure mongoIsInstalledAndRunning = {
+	
+	if (!("mongod --version".execute().text.contains('db version'))) {
+		logger.error "************************************************************"
+		logger.error "* MongoDB does not appear to be installed. Cannot run tests. *"
+		logger.error "************************************************************"
+		//throw new Exception("MongoDB does not appear to be install. Cannot run tests.")
+		return false
+	}
+	
+	boolean mongoIsNotRunning = !curlCheckMongoRunning()
+			
+	if (mongoIsNotRunning) {
+		logger.error "************************************************************"
+		logger.error "* MongoDB does not appear to be running. Cannot run tests. *"
+		logger.error "************************************************************"
+		//throw new Exception("MongoDB does not appear to be running. Cannot run tests.")
+		return false
+	}
+	
+	return true
+}
+
+boolean mongoOK = mongoIsInstalledAndRunning()
+
+task requireMongo << {
+	if (!mongoOK) throw new Exception("MongoDB does not appear to be running.")
+}
