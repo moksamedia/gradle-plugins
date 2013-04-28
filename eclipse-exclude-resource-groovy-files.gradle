@@ -13,4 +13,11 @@ eclipse.classpath.file.withXml {
 		}
 	}
 }
+
+/*
+ * Not awesome but had to add this because duplicate classpath entries
+ * were ending up in the .classpath file. Another method would be to 
+ * simply delete the .classpath file before the eclipse task (might be
+ * faster)
+ */
 tasks.eclipse.dependsOn cleanEclipse
