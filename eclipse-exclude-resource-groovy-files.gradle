@@ -13,3 +13,4 @@ eclipse.classpath.file.withXml {
 		}
 	}
 }
+tasks.eclipse.dependsOn cleanEclipse
