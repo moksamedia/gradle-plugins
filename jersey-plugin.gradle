@@ -98,7 +98,7 @@ class JerseyPlugin implements Plugin<Project> {
 				xml.'servlet-mapping'.replaceNode {
 					'servlet-mapping' {
 						'servlet-name'(project.extensions.jersey.servletName)
-						'url-patter'(project.extensions.jersey.urlPattern)
+						'url-pattern'(project.extensions.jersey.urlPattern)
 					}
 				}
 
